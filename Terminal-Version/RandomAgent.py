@@ -28,38 +28,11 @@ def check_winner(board, player):
 def is_full(board):
     return all(cell != " " for row in board for cell in row)
 
-def get_available_moves(board):
-    return [(row, col) for row in range(6) for col in range(7) if board[row][col] == " "]
+# Function to get a random move from the Random Agent
+def random_agent_move(board):
+    empty_cells = [(row, col) for row in range(6) for col in range(7) if board[row][col] == " "]
+    return random.choice(empty_cells)
 
-def rule_based_agent(board):
-    # Rule 1 Check win move
-    for row, col in get_available_moves(board):
-        board[row][col] = "○"
-        if check_winner(board, "○"):
-            return row, col
-        board[row][col] = " "
-
-    # Rule 2 Check block move
-    for row, col in get_available_moves(board):
-        board[row][col] = "●"
-        if check_winner(board, "●"):
-            board[row][col] = "○"
-            return row, col
-        board[row][col] = " "
-
-    # Rule 3 take center space
-    if board[2][3] == " ":
-        return 2, 3
-    
-    # Rule 4 take corners
-    corners = [(0, 0), (0, 6), (5, 0), (5, 6)]
-    random.shuffle(corners)
-    for row, col in corners:
-        if board[row][col] == " ":
-            return row, col
-        
-    # Rule 5
-    return random.choice(get_available_moves(board))
 
 def play_game():
     board = [[" " for _ in range(7)] for _ in range(6)]
@@ -90,15 +63,15 @@ def play_game():
             print("It's a draw!")
             break
 
-        # Rule-Based Agent move
-        row, col = rule_based_agent(board)
+        # random Agent move
+        row, col = random_agent_move(board)
         board[row][col] = "○"
-        print(f"Rule-Based Agent placed '○' at ({row}, {col})")
+        print(f"Random Agent placed '○' at ({row}, {col})")
         display_board(board)
 
         # Check if the agent wins
         if check_winner(board, "○"):
-            print("Rule-Based Agent wins! Better luck next time.")
+            print("Random Agent wins! Better luck next time.")
             break
 
         # Check for a draw
