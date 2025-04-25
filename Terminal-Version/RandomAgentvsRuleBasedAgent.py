@@ -102,4 +102,5 @@ def play_game():
         current_player = 1 - current_player
 
 # Start the game
-play_game()
+if __name__ == "__main__":
+    play_game()
