@@ -39,11 +39,6 @@ def bfs_ai_move(board, player, opponent):
     visited_states = set()  # To store visited board states
     available_moves = get_available_moves(board)
 
-    # Show all available moves before making a decision
-    # print("\nAvailable moves before AI makes a move:")
-    # for move in available_moves:
-    #     print(f"Row: {move[0]}, Col: {move[1]}")
-
     print("\n--- BFS with Queue Search Process ---")
 
     while not q.empty():

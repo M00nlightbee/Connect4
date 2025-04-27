@@ -8,7 +8,7 @@ def display_board(board):
 def check_winner(board, player):
     # Check horizontal
     for row in board:
-        if any(row[i:i+4] == [player]*4 for i in range(len(row) - 3)):
+        if any(list(row[i:i+4]) == [player]*4 for i in range(4)):
             return True
 
     # Check vertical
@@ -29,37 +29,47 @@ def is_full(board):
     return all(cell != " " for row in board for cell in row)
 
 def get_available_moves(board):
-    return [(row, col) for row in range(6) for col in range(7) if board[row][col] == " "]
+    """Return a list of available columns (0-6) that are not full."""
+    return [col for col in range(7) if board[0][col] == " "]  # Top row empty means column not full
 
-def rule_based_agent(board):
-    # Rule 1 Check win move
-    for row, col in get_available_moves(board):
-        board[row][col] = "○"
-        if check_winner(board, "○"):
-            return row, col
-        board[row][col] = " "
-
-    # Rule 2 Check block move
-    for row, col in get_available_moves(board):
-        board[row][col] = "●"
-        if check_winner(board, "●"):
-            board[row][col] = "○"
-            return row, col
-        board[row][col] = " "
-
-    # Rule 3 take center space
-    if board[2][3] == " ":
-        return 2, 3
-    
-    # Rule 4 take corners
-    corners = [(0, 0), (0, 6), (5, 0), (5, 6)]
-    random.shuffle(corners)
-    for row, col in corners:
+def drop_piece(board, col, player):
+    """Drop a piece into the lowest available row in the specified column."""
+    for row in range(5, -1, -1):  # Start from the bottom row
         if board[row][col] == " ":
+            board[row][col] = player
             return row, col
-        
-    # Rule 5
-    return random.choice(get_available_moves(board))
+    return None  # Column is full
+
+# Rule based Agent
+def rule_based_agent(board):
+    # Rule 1: Check win move
+    for col in get_available_moves(board):
+        temp_board = [row[:] for row in board]
+        row, _ = drop_piece(temp_board, col, "○")
+        if check_winner(temp_board, "○"):
+            return drop_piece(board, col, "○")
+
+    # Rule 2: Check block move
+    for col in get_available_moves(board):
+        temp_board = [row[:] for row in board]
+        row, _ = drop_piece(temp_board, col, "●")
+        if check_winner(temp_board, "●"):
+            return drop_piece(board, col, "○")
+
+    # Rule 3: Take center column
+    if board[0][3] == " ":
+        return drop_piece(board, 3, "○")
+
+    # Rule 4: Take corners
+    corners = [0, 6]
+    random.shuffle(corners)
+    for col in corners:
+        if board[0][col] == " ":
+            return drop_piece(board, col, "○")
+
+    # Rule 5: Default to random move
+    col = random.choice(get_available_moves(board))
+    return drop_piece(board, col, "○")
 
 def play_game():
     board = [[" " for _ in range(7)] for _ in range(6)]
@@ -70,13 +80,13 @@ def play_game():
         # Player move
         while True:
             try:
-                row, col = map(int, input("Enter your move (row and column, separated by space, e.g., '0 1'): ").split())
-                if board[row][col] == " ":
-                    board[row][col] = "●"
+                col = int(input("Enter your move (column 0-6): "))
+                if col in get_available_moves(board):
+                    drop_piece(board, col, "●")
                     break
-                print("Cell already taken. Try again.")
+                print("Column full or invalid. Try again.")
             except (ValueError, IndexError):
-                print("Invalid input. Use numbers between 0-5 for row and 0-6 for column.")
+                print("Invalid input. Enter a number between 0 and 6.")
 
         display_board(board)
 
@@ -92,7 +102,6 @@ def play_game():
 
         # Rule-Based Agent move
         row, col = rule_based_agent(board)
-        board[row][col] = "○"
         print(f"Rule-Based Agent placed '○' at ({row}, {col})")
         display_board(board)
 

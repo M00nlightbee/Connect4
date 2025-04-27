@@ -8,7 +8,7 @@ def display_board(board):
 def check_winner(board, player):
     # Check horizontal
     for row in board:
-        if any(row[i:i+4] == [player]*4 for i in range(len(row) - 3)):
+        if any(list(row[i:i+4]) == [player]*4 for i in range(4)):
             return True
 
     # Check vertical
@@ -29,15 +29,25 @@ def is_full(board):
     return all(cell != " " for row in board for cell in row)
 
 def get_available_moves(board):
-    return [(row, col) for row in range(6) for col in range(7) if board[row][col] == " "]
+    """Return a list of available columns (0-6) that are not full."""
+    return [col for col in range(7) if board[0][col] == " "]  # Top row empty means column not full
+
+def drop_piece(board, col, player):
+    """Drop a piece into the lowest available row in the specified column."""
+    for row in range(5, -1, -1):  # Start from the bottom row
+        if board[row][col] == " ":
+            board[row][col] = player
+            return row, col
+    return None  # Column is full
 
 # BFS Agent
 def bfs_ai_move(board, player, opponent):
     available_moves = []
-    for row in range(6):
-        for col in range(7):
+    for col in range(7):  # Iterate over columns instead of rows
+        for row in range(5, -1, -1):  # Start from the bottom row
             if board[row][col] == " ":
                 available_moves.append((row, col))
+                break  # Only the lowest empty row in the column is valid
 
     print("Available moves before the AI makes a move:")
     for move in available_moves:
@@ -73,9 +83,17 @@ def play_game():
         display_board(board)
 
         if current_player == "●":
+            available_cols = get_available_moves(board)
             # Human player's turn
-            row = int(input("Enter row (0-5): "))
-            col = int(input("Enter col (0-6): "))
+            while True:
+                try:
+                    col = int(input("Enter column (0-6): "))
+                    if col not in available_cols:
+                        print("Column full or invalid. Try again.")
+                        continue
+                    break
+                except (ValueError, IndexError):
+                    print("Invalid input. Enter a number 0-6.")
         else:
             # AI's turn
             print("\nAI is thinking...")
