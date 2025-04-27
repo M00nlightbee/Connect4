@@ -91,9 +91,22 @@ def play_game():
         display_board(board)
 
         # Check for a winner or draw
+        # if check_winner(board, players[current_player]):
+        #     print(f"\nPlayer {players[current_player]} wins!")
+        #     break
+
+        # if check_winner(board, players[0]):
+        #     print(f"\nRandom Agent wins! {players[0]}")
+        # else:
+        #     print(f"\nRule-Based Agent wins! {players[0]}")
+
         if check_winner(board, players[current_player]):
-            print(f"\nPlayer {players[current_player]} wins!")
+            if(players[0] == players[current_player]):
+                print(f"\nRandom Agent wins! {players[0]}")
+            else:
+                print(f"\nRule-Based Agent wins! {players[1]}")
             break
+
         if is_full(board):
             print("\nIt's a draw!")
             break

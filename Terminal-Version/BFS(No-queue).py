@@ -1,7 +1,5 @@
 # Not using queue data structure and more like the rule-based agent.
 
-import random
-
 def display_board(board):
     for row in board:
         print(" | ".join(row))
