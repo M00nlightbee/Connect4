@@ -147,13 +147,13 @@ def play_game():
             while True:
                 try:
                     col = int(input("Enter column (0-6): "))
-                    if col not in available_cols:
-                        print("Column full or invalid. Try again.")
-                        continue
-                    break
+                    if col in available_cols:
+                        game.make_move(col, game.current_player)
+                        break
+                    else:
+                        print("Invalid input. Try Again")
                 except (ValueError, IndexError):
-                    print("Invalid input. Enter a number 0-6.")
-            game.make_move(col, game.current_player)
+                    print("Invalid input. Enter a number between 0 and 6.")
         else:
             # AI's turn
             print("AI's move:")

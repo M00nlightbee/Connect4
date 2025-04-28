@@ -6,23 +6,28 @@ def display_board(board):
         print("-" * 26)
 
 def check_winner(board, player):
-    # Check horizontal
+    # Check Horizontal
     for row in board:
         if any(list(row[i:i+4]) == [player]*4 for i in range(4)):
             return True
 
-    # Check vertical
-    for col in range(7):
-        if any(all(board[row+i][col] == player for i in range(4)) for row in range(3)):
-            return True
-
-    # Check diagonals
-    for row in range(3):
-        for col in range(4):
-            if all(board[row+i][col+i] == player for i in range(4)) or \
-               all(board[row+i][col+3-i] == player for i in range(4)):
+    # Check Vertical
+    for c in range(7):
+        for r in range(3):
+            if all(board[r+i][c] == player for i in range(4)):
                 return True
 
+    # Check Positive diagonal
+    for r in range(3):
+        for c in range(4):
+            if all(board[r+i][c+i] == player for i in range(4)):
+                return True
+
+    # Check Negative diagonal
+    for r in range(3):
+        for c in range(3, 7):
+            if all(board[r+i][c-i] == player for i in range(4)):
+                return True
     return False
 
 def is_full(board):
@@ -44,16 +49,16 @@ def drop_piece(board, col, player):
 def rule_based_agent(board):
     # Rule 1: Check win move
     for col in get_available_moves(board):
-        temp_board = [row[:] for row in board]
-        row, _ = drop_piece(temp_board, col, "○")
-        if check_winner(temp_board, "○"):
+        new_board = [row[:] for row in board]
+        row, _ = drop_piece(new_board, col, "○")
+        if check_winner(new_board, "○"):
             return drop_piece(board, col, "○")
 
     # Rule 2: Check block move
     for col in get_available_moves(board):
-        temp_board = [row[:] for row in board]
-        row, _ = drop_piece(temp_board, col, "●")
-        if check_winner(temp_board, "●"):
+        new_board = [row[:] for row in board]
+        row, _ = drop_piece(new_board, col, "●")
+        if check_winner(new_board, "●"):
             return drop_piece(board, col, "○")
 
     # Rule 3: Take center column
@@ -77,14 +82,17 @@ def play_game():
     display_board(board)
 
     while True:
+        available_cols = get_available_moves(board)
+        print(f"Available columns: {available_cols}")
         # Player move
         while True:
             try:
                 col = int(input("Enter your move (column 0-6): "))
-                if col in get_available_moves(board):
+                if col in available_cols:
                     drop_piece(board, col, "●")
                     break
-                print("Column full or invalid. Try again.")
+                else:
+                    print("Invalid input. Try Again")
             except (ValueError, IndexError):
                 print("Invalid input. Enter a number between 0 and 6.")
 
@@ -102,7 +110,7 @@ def play_game():
 
         # Rule-Based Agent move
         row, col = rule_based_agent(board)
-        print(f"Rule-Based Agent placed '○' at ({row}, {col})")
+        print(f"Rule-Based Agent placed '○' at ( row: {row}, column: {col})")
         display_board(board)
 
         # Check if the agent wins

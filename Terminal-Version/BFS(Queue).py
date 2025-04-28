@@ -6,30 +6,44 @@ def display_board(board):
         print("-" * 26)
 
 def check_winner(board, player):
-    # Check horizontal
+    # Check Horizontal
     for row in board:
-        if any(row[i:i+4] == [player]*4 for i in range(len(row) - 3)):
+        if any(list(row[i:i+4]) == [player]*4 for i in range(4)):
             return True
 
-    # Check vertical
-    for col in range(7):
-        if any(all(board[row+i][col] == player for i in range(4)) for row in range(3)):
-            return True
-
-    # Check diagonals
-    for row in range(3):
-        for col in range(4):
-            if all(board[row+i][col+i] == player for i in range(4)) or \
-               all(board[row+i][col+3-i] == player for i in range(4)):
+    # Check Vertical
+    for c in range(7):
+        for r in range(3):
+            if all(board[r+i][c] == player for i in range(4)):
                 return True
 
+    # Check Positive diagonal
+    for r in range(3):
+        for c in range(4):
+            if all(board[r+i][c+i] == player for i in range(4)):
+                return True
+
+    # Check Negative diagonal
+    for r in range(3):
+        for c in range(3, 7):
+            if all(board[r+i][c-i] == player for i in range(4)):
+                return True
     return False
 
 def is_full(board):
     return all(cell != " " for row in board for cell in row)
 
 def get_available_moves(board):
-    return [(row, col) for row in range(6) for col in range(7) if board[row][col] == " "]
+    """Return a list of available columns (0-6) that are not full."""
+    return [col for col in range(7) if board[0][col] == " "]  # Top row empty means column not full
+
+def drop_piece(board, col, player):
+    """Drop a piece into the lowest available row in the specified column."""
+    for row in range(5, -1, -1):  # Start from the bottom row
+        if board[row][col] == " ":
+            board[row][col] = player
+            return row, col
+    return None  # Column is full
 
 # BFS Agent
 def bfs_ai_move(board, player, opponent):
@@ -51,36 +65,33 @@ def bfs_ai_move(board, player, opponent):
 
         visited_states.add(current_state)
 
-        # print("\nEvaluating Board State:")
-        # display_board(current_board)
-
         # Get available moves
         available_moves = get_available_moves(current_board)
 
         # Check for a winning move
-        for move in available_moves:
-            row, col = move
+        for col in available_moves:
             new_board = [r[:] for r in current_board]
-            new_board[row][col] = player
+            drop_result = drop_piece(new_board, col, player)
+            if drop_result:
+                row, col = drop_result  # Unpack the result
+                if check_winner(new_board, player):
+                    print(f"\nBFS with Queue chooses WINNING move: Row ({row}), Column ({col})")
+                    return col  # Return the column of the winning move
 
-            if check_winner(new_board, player):
-                print(f"\nAI chooses WINNING move: Row {row}, Col {col}")
-                return row, col  # Return immediately if winning move found
-
-            q.put((new_board, (row, col)))  # Add to BFS queue
+            q.put((new_board, col))  # Add to BFS queue
 
         # Check for a blocking move
-        for move in available_moves:
-            row, col = move
+        for col in available_moves:
             new_board = [r[:] for r in current_board]
-            new_board[row][col] = opponent
+            drop_result = drop_piece(new_board, col, opponent)
+            if drop_result:
+                row, col = drop_result  # Unpack the result
+                if check_winner(new_board, opponent):
+                    print(f"\nBFS with Queue chooses BLOCKING move: Row ({row}), Column ({col})")
+                    return col  # Return the column of the blocking move
 
-            if check_winner(new_board, opponent):
-                print(f"\nAI chooses BLOCKING move: Row {row}, Col {col}")
-                return row, col  # Block opponent if they can win
-
-    # If no winning/blocking move, pick first available move
-    print("\nNo winning or blocking move found. AI picks a RANDOM move.")
+    # If no winning/blocking move, pick the first available move
+    print("\nNo winning or blocking move found. BFS with Queue AI picks a RANDOM move.")
     return available_moves[0] if available_moves else None
 
 def play_game():
@@ -89,54 +100,42 @@ def play_game():
     current_player = players[0]
 
     while True:
-        display_board(board)
-        
+        display_board(board)        
         if current_player == "●":
+            available_cols = get_available_moves(board)
             # Human player's turn
             while True:
                 try:
-                    row = int(input("Enter row (0-5): "))
-                    col = int(input("Enter col (0-6): "))
-                    
-                    # Validate if the cell is empty
-                    if board[row][col] != " ":
-                        print("Cell is already occupied.")
-                        continue                    
-                    break  # Exit the loop if input is valid
+                    col = int(input("Enter your move (column 0-6): "))
+                    if col in available_cols:
+                        drop_piece(board, col, current_player)
+                        break
+                    else:
+                        print("Invalid input. Try Again")
                 except (ValueError, IndexError):
-                    print("Invalid input. Use numbers between 0-5 for row and 0-6 for column.")
+                    print("Invalid input. Enter a number between 0 and 6.")
         else:
             # AI's turn
             print("\nAI is thinking...")
-            move = bfs_ai_move(board, current_player, players[0])  # Pass opponent as the human player
+            col = bfs_ai_move(board, current_player, players[0])  # Pass opponent as the human player
 
-            if move:
-                row, col = move
+            if col is not None:
+                drop_piece(board, col, current_player)  # Apply the move on the actual board
             else:
                 print("No valid moves available!")
                 break
 
-        # Make the move if valid
-        if board[row][col] == " ":
-            board[row][col] = current_player
-        else:
-            print("Invalid move! Try again.")
-            continue
-
-        # Check for win or draw
         if check_winner(board, current_player):
             display_board(board)
-            if(current_player):
-                print(f"\nBFS with Queue Agent wins! {players[0]}")
+            if current_player == "●":
+                print(f"You Win! {current_player}")
             else:
-                print(f"\nYou wins! {players[1]}")
+                print(f"AI Wins! {current_player}")
             break
-
-        if is_full(board):
+        elif is_full(board):
             display_board(board)
             print("It's a draw!")
             break
-
         # Switch players
         current_player = "○" if current_player == "●" else "●"
 
