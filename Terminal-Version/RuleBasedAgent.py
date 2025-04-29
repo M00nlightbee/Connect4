@@ -1,127 +1,92 @@
 import random
+import numpy as np
+from Connect4 import Connect4
 
-def display_board(board):
-    for row in board:
-        print(" | ".join(row))
-        print("-" * 26)
+class RuleBasedAgent:
+    # Instantiate class
+    def __init__(self, game):
+        self.game = game
 
-def check_winner(board, player):
-    # Check Horizontal
-    for row in board:
-        if any(list(row[i:i+4]) == [player]*4 for i in range(4)):
-            return True
+    # Define rule based agent
+    def rule_based_agent(self, board):
+        # game = Connect4()
+        self.game.board = np.copy(board)  # Sync the board
 
-    # Check Vertical
-    for c in range(7):
-        for r in range(3):
-            if all(board[r+i][c] == player for i in range(4)):
-                return True
+        # Rule 1: Win if possible
+        for col in self.game.get_available_moves(board):
+            new_board = self.game.drop_piece(self.game.board, col, "○")
+            if new_board is not None and self.game.check_winner("○", board=new_board):
+                return col  # Return the column to move
 
-    # Check Positive diagonal
-    for r in range(3):
-        for c in range(4):
-            if all(board[r+i][c+i] == player for i in range(4)):
-                return True
+        # Rule 2: Block opponent win
+        for col in self.game.get_available_moves(board):
+            new_board = self.game.drop_piece(self.game.board, col, "●")
+            if new_board is not None and self.game.check_winner("●", board=new_board):           
+                return col  # Return the column to block the opponent's win
 
-    # Check Negative diagonal
-    for r in range(3):
-        for c in range(3, 7):
-            if all(board[r+i][c-i] == player for i in range(4)):
-                return True
-    return False
+        # Rule 3: Take center
+        # if game.board[0, 3] == " ":
+        #     return 3
 
-def is_full(board):
-    return all(cell != " " for row in board for cell in row)
+        # Rule 4: Take corners
+        # corners = [0, 6]
+        # random.shuffle(corners)
+        # for col in corners:
+        #     if game.board[0, col] == " ":
+        #         return col
 
-def get_available_moves(board):
-    """Return a list of available columns (0-6) that are not full."""
-    return [col for col in range(7) if board[0][col] == " "]  # Top row empty means column not full
-
-def drop_piece(board, col, player):
-    """Drop a piece into the lowest available row in the specified column."""
-    for row in range(5, -1, -1):  # Start from the bottom row
-        if board[row][col] == " ":
-            board[row][col] = player
-            return row, col
-    return None  # Column is full
-
-# Rule based Agent
-def rule_based_agent(board):
-    # Rule 1: Check win move
-    for col in get_available_moves(board):
-        new_board = [row[:] for row in board]
-        row, _ = drop_piece(new_board, col, "○")
-        if check_winner(new_board, "○"):
-            return drop_piece(board, col, "○")
-
-    # Rule 2: Check block move
-    for col in get_available_moves(board):
-        new_board = [row[:] for row in board]
-        row, _ = drop_piece(new_board, col, "●")
-        if check_winner(new_board, "●"):
-            return drop_piece(board, col, "○")
-
-    # Rule 3: Take center column
-    if board[0][3] == " ":
-        return drop_piece(board, 3, "○")
-
-    # Rule 4: Take corners
-    corners = [0, 6]
-    random.shuffle(corners)
-    for col in corners:
-        if board[0][col] == " ":
-            return drop_piece(board, col, "○")
-
-    # Rule 5: Default to random move
-    col = random.choice(get_available_moves(board))
-    return drop_piece(board, col, "○")
+        # Rule 5: Random move
+        return random.choice(self.game.get_available_moves(board))
 
 def play_game():
-    board = [[" " for _ in range(7)] for _ in range(6)]
+    game = Connect4()
+    rule_based = RuleBasedAgent(game)
+    board = np.full((6, 7), " ")
     print("Welcome to Connect 4! You are '●' and the Rule-Based Agent is '○'.")
-    display_board(board)
 
     while True:
-        available_cols = get_available_moves(board)
+        game.display_board()
+        available_cols = game.get_available_moves(board)
         print(f"Available columns: {available_cols}")
-        # Player move
-        while True:
-            try:
-                col = int(input("Enter your move (column 0-6): "))
-                if col in available_cols:
-                    drop_piece(board, col, "●")
-                    break
-                else:
-                    print("Invalid input. Try Again")
-            except (ValueError, IndexError):
-                print("Invalid input. Enter a number between 0 and 6.")
 
-        display_board(board)
+        if game.current_player == "●":
+            # Player move
+            while True:
+                try:
+                    col = int(input("Enter your move (column 0-6): "))
+                    if col in available_cols:
+                        game.make_move(col, game.current_player)
+                        break
+                    else:
+                        print("Invalid input. Try Again")
+                except (ValueError, IndexError):
+                    print("Invalid input. Enter a number between 0 and 6.")
+        else:
+            # Rule Based AI's turn
+            print("Rule Based AI's move:")
+            col = rule_based.rule_based_agent(board)
+            if col is not None:
+                game.make_move(col, game.current_player)
+                board = game.board  # Sync the board
+            else:
+                print("AI could not make a move!")
+                break
 
-        # Check if player wins
-        if check_winner(board, "●"):
-            print("Congratulations! You win!")
+        if game.check_winner("○"):
+            game.display_board()
+            print("Rule Based Agent AI wins!")
             break
-
-        # Check for a draw
-        if is_full(board):
+        elif game.check_winner("●"):
+            game.display_board()
+            print("You win!")
+            break
+        elif game.is_full(board):
+            game.display_board()
             print("It's a draw!")
             break
 
-        # Rule-Based Agent move
-        row, col = rule_based_agent(board)
-        print(f"Rule-Based Agent placed '○' at ( row: {row}, column: {col})")
-        display_board(board)
-
-        # Check if the agent wins
-        if check_winner(board, "○"):
-            print("Rule-Based Agent wins! Better luck next time.")
-            break
-
-        # Check for a draw
-        if is_full(board):
-            print("It's a draw!")
-            break
+        # Switch player
+        game.current_player = "○" if game.current_player == "●" else "●"
 
 # Start the game
 if __name__ == "__main__":

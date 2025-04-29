@@ -1,50 +1,46 @@
-import random
-import numpy as np
 from Connect4 import Connect4
-from RandomAgent import RandomAgent
-from RuleBasedAgent import RuleBasedAgent
+from BFSWithNoQueue import BFSNoQueue
+from BFS import BFSAgent
+
 
 def play_game():
     game = Connect4()
-    random_agent = RandomAgent(game)
-    rule_based = RuleBasedAgent(game)
-    board = np.full((6, 7), " ")
+    bfs_without_Queue = BFSNoQueue(game)
+    bfs = BFSAgent(game)
 
     while True:
         game.display_board()
-        available_cols = game.get_available_moves(board)
+        available_cols = game.get_available_moves(game.board)
         print(f"Available columns: {available_cols}")
 
         if game.current_player == "●":
-            # Random Agent AI's turn
-            print("Random Agent turn!")
-            col = random_agent.random_agent_move(board)
+            # BFS without Queue AI's turn
+            print("BFS without Queue Agent turn!")
+            col = bfs_without_Queue.bfs_ai_move(game.board, player="○", opponent="●")
             if col is not None:
                 game.make_move(col, game.current_player)
-                board = game.board  # Sync the board
             else:
-                print("AI could not make a move!")
+                print("BFS without Queue could not make a move!")
                 break           
         else:
-            # Rule Based AI's turn
-            print("Rule Based AI's move:")
-            col = rule_based.rule_based_agent(board)
+            # BFS Agent AI's turn
+            print("BFS Agent move:")
+            col = bfs.bfs_ai_move(game.board, player="○", opponent="●")
             if col is not None:
                 game.make_move(col, game.current_player)
-                board = game.board  # Sync the board
             else:
-                print("AI could not make a move!")
+                print("BFS Agent could not make a move!")
                 break
 
         if game.check_winner("○"):
             game.display_board()
-            print("Rule Based AI wins!")
+            print("BFS Agent wins!")
             break
         elif game.check_winner("●"):
             game.display_board()
-            print("Random Agent AI wins!")
+            print("BFS without Queue Agent AI wins!")
             break
-        elif game.is_full(board):
+        elif game.is_full(game.board):
             game.display_board()
             print("It's a draw!")
             break
@@ -52,5 +48,7 @@ def play_game():
         # Switch player
         game.current_player = "○" if game.current_player == "●" else "●"
 
+# Start the game
 if __name__ == "__main__":
     play_game()
+
