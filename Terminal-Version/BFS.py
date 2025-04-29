@@ -21,7 +21,7 @@ class BFSAgent:
         while not q.empty():
             current_board, move = q.get()
 
-            # Convert board to tuple (to store in set)
+            # Convert board to tuple to store in set(row and col)
             current_state = tuple(tuple(row) for row in current_board)
             if current_state in self.visited_states:
                 continue  # Skip if already visited

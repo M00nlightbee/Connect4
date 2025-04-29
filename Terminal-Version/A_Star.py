@@ -11,16 +11,27 @@ class AStarAgent:
         self.ai_player = "○"
 
     def evaluate_board(self, board):
-        """Simple heuristic to value board positions."""
+        """Heuristic function: Assigns a score to the board state."""
         if self.game.check_winner(self.ai_player, board):
             return 100
         if self.game.check_winner(self.opponent_player, board):
             return -100
         score = 0
 
-        center_array = [board[r][3] for r in range(6)]
-        center_count = center_array.count(self.ai_player)
-        score += center_count * 3  # Prefer center column
+        # Center position
+        if board[0, 3] == self.ai_player:
+            score += 50
+        
+        # Corners positions
+        corners = [0, 6]
+        # random.shuffle(corners)
+        for col in corners:
+            if board[0, col] == self.ai_player:
+                score += 20
+
+        # center_array = [board[r][3] for r in range(6)]
+        # center_count = center_array.count(self.ai_player)
+        # score += center_count * 3  # Prefer center column
 
         return score
 
@@ -45,20 +56,24 @@ class AStarAgent:
                 if self.game.check_winner(self.ai_player, new_state):
                     return col  # Immediate win
 
-                # Check if opponent's move results in a win
+                # Block opponent's winning move
                 opponent_state = self.game.drop_piece(board_state, col, self.opponent_player)
                 if opponent_state is not None and self.game.check_winner(self.opponent_player, opponent_state):
                     return col  # Block human's winning move
 
                 # Evaluate the board state
-                score = self.evaluate_board(new_state)
-                if score > best_score:
-                    best_score = score
+                h = self.evaluate_board(new_state)
+                # A* cost function: f(n) = g(n) + h(n)
+                f_new = g + 1 + h
+
+                if h > best_score:
+                    best_score = h
                     best_move = col
 
-                heapq.heappush(open_list, (g + 1 - score, g + 1, col, tuple(map(tuple, new_state))))
+                heapq.heappush(open_list, (f_new, g + 1, col, tuple(map(tuple, new_state))))
 
-        return best_move if best_move is not None else random.choice(self.game.get_available_moves())
+        available_moves = self.game.get_available_moves(board_state)
+        return best_move if best_move is not None else (random.choice(available_moves) if available_moves else None)
 
     def best_move(self):
         move = self.a_star_search()

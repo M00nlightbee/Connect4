@@ -9,7 +9,6 @@ class RuleBasedAgent:
 
     # Define rule based agent
     def rule_based_agent(self, board):
-        # game = Connect4()
         self.game.board = np.copy(board)  # Sync the board
 
         # Rule 1: Win if possible
@@ -24,15 +23,15 @@ class RuleBasedAgent:
             if new_board is not None and self.game.check_winner("●", board=new_board):           
                 return col  # Return the column to block the opponent's win
 
-        # Rule 3: Take center
-        # if game.board[0, 3] == " ":
+        # # Rule 3: Take center
+        # if self.game.board[0, 3] == " ":
         #     return 3
 
-        # Rule 4: Take corners
+        # # Rule 4: Take corners
         # corners = [0, 6]
         # random.shuffle(corners)
         # for col in corners:
-        #     if game.board[0, col] == " ":
+        #     if self.game.board[0, col] == " ":
         #         return col
 
         # Rule 5: Random move
