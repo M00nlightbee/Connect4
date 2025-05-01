@@ -24,14 +24,11 @@ class AStarAgent:
         
         # Corners positions
         corners = [0, 6]
-        # random.shuffle(corners)
         for col in corners:
             if board[0, col] == self.ai_player:
                 score += 20
 
-        # center_array = [board[r][3] for r in range(6)]
-        # center_count = center_array.count(self.ai_player)
-        # score += center_count * 3  # Prefer center column
+
 
         return score
 

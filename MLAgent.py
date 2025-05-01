@@ -11,28 +11,6 @@ from sklearn.preprocessing import StandardScaler
 import joblib
 import os
 
-def train_model(X, y, model_type=SVC, **model_kwargs):
-    # Normalize the dataset
-    scaler = StandardScaler()
-    X = scaler.fit_transform(X)
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
-    model = model_type(**model_kwargs)
-    print(f"Training {model_type.__name__} model...")
-    model.fit(X_train, y_train)
-
-    predictions = model.predict(X_test)
-    print(f"\nTrained {model_type.__name__}")
-    print("\nModel Accuracy:", accuracy_score(y_test, predictions) * 100, "%")
-    print("Classification Report:\n", classification_report(y_test, predictions, zero_division=0))
-
-    # Save the trained model
-    model_filename = f"{model_type.__name__}_model.pkl"
-    joblib.dump(model, model_filename)
-    print(f"Model saved as {model_filename}")
-
-    return model
-
 def convert_to_game_moves(flat_board):
     board = np.array(flat_board).reshape(6, 7)
     moves = []
@@ -73,8 +51,7 @@ def data_set_prep():
 
     print("Dataset built:")
     print(f"Total training samples: {X_data.shape[0]}")
-    # print("Example board:", X_data[0])
-    print("Inferred move for that board:", y_data[0])
+    # print("Inferred move for that board:", y_data[0])
     return X_data, y_data
 
 
@@ -220,7 +197,7 @@ def play_game(model):
 if __name__ == "__main__":
     try:
         X, y = data_set_prep()
-        # X, y = X[:100000], y[:100000]  # Use only the first 100,000 samples
+        X, y = X[:100000], y[:100000]  # Use only the first 100,000 samples
         model_choice = input("Choose model (logistic, forest, svc, lsvc): ").strip().lower()
         
         if model_choice == "forest":

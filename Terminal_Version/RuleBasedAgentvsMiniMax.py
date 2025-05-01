@@ -58,8 +58,6 @@ if __name__ == "__main__":
             rule_based_wins += 1
         else:
             draws += 1
-        if (i + 1) % 50 == 0:
-            print(f"Completed {i + 1} games...")
 
     end_time = time.time()
     duration = end_time - start_time

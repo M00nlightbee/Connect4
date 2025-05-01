@@ -96,7 +96,7 @@ class MiniMax:
         if best_col is None and available_moves:
             # Default: Choose a random valid column if no best move is found
             best_col = random.choice(available_moves)
-            print(f"No optimal move found. Falling back to random column: {best_col}")
+            print(f"No optimal move found. Random column: {best_col}")
 
         print(f"Best move selected: {best_col}, Score: {best_val}")
         return best_col
