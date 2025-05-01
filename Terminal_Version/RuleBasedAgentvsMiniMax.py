@@ -1,16 +1,17 @@
-# Random agent vs Smart (Rule-based) agent. 
+# Smart (Rule-based) agent vs mini-max agent. 
 
 import time
 import random
 import numpy as np
 from Connect4 import Connect4
-from RandomAgent import RandomAgent
 from RuleBasedAgent import RuleBasedAgent
+from MiniMax import MiniMax
 
 def play_game(verbose=False):
     game = Connect4()
-    random_agent = RandomAgent(game)
-    rule_based = RuleBasedAgent(game)     
+    minimax_agent = MiniMax(game)
+    rule_based = RuleBasedAgent(game)
+
     while True:
         if verbose:
             game.display_board()
@@ -18,10 +19,10 @@ def play_game(verbose=False):
             print(f"Available columns: {available_cols}")
 
         if game.current_player == "●":
-            col = col = random_agent.random_agent_move(game.board)
+            col = minimax_agent.best_move()
             if verbose:
-                print("Random AI's turn")
-                print(f"Random AI chooses column: {col}")
+                print("MiniMax AI's turn")
+                print(f"MiniMax AI chooses column: {col}")
         else:
             col = rule_based.rule_based_agent(game.board)
             if verbose:
@@ -36,7 +37,7 @@ def play_game(verbose=False):
         if game.check_winner("○"):
             return "rule_based"
         elif game.check_winner("●"):
-            return "random"
+            return "minimax"
         elif game.is_full(game.board):
             return "draw"
 
@@ -44,15 +45,15 @@ def play_game(verbose=False):
 
 if __name__ == "__main__":
     start_time = time.time()
-    random_wins = 0
+    minimax_wins = 0
     rule_based_wins = 0
     draws = 0
     total_games = 100
 
     for i in range(total_games):
         game_result = play_game()
-        if game_result == "random":
-            random_wins += 1
+        if game_result == "minimax":
+            minimax_wins += 1
         elif game_result == "rule_based":
             rule_based_wins += 1
         else:
@@ -63,9 +64,9 @@ if __name__ == "__main__":
     end_time = time.time()
     duration = end_time - start_time
 
-    print("----Random agent vs Smart (Rule-based) agent----")
+    print("----Smart (Rule-based) agent vs mini-max agent----")
     print(f"\nResults after {total_games} games:")
-    print(f"Random Agent wins: {random_wins}")
+    print(f"MiniMax Agent wins: {minimax_wins}")
     print(f"Rule-Based Agent wins: {rule_based_wins}")
     print(f"Draws: {draws}")
     print(f"Total time taken: {duration:.2f} seconds")

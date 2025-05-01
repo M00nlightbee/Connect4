@@ -1,42 +1,37 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-# from sklearn import preprocessing
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import accuracy_score, classification_report
-from Terminal_Version.Connect4 import Connect4  # Adjust the import to match the folder structure
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from Terminal_Version.Connect4 import Connect4
+from sklearn.preprocessing import StandardScaler
+import joblib
+import os
 
-# def dataset():   
-#     # Load the dataset 
-#     df = pd.read_csv(r'Data\connect-4.data\connect-4.data', header=None)
+def train_model(X, y, model_type=SVC, **model_kwargs):
+    # Normalize the dataset
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
 
-#     # Output info
-#     print("\nShape of the dataset:", df.shape)
-#     print("\nFirst 5 rows:\n", df.head())
-#     print("\nData types:\n", df.dtypes)
-#     print("\nMissing values in each column:\n", df.isnull().sum())
-#     print(df.info())
-#     print(df.describe())
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
+    model = model_type(**model_kwargs)
+    print(f"Training {model_type.__name__} model...")
+    model.fit(X_train, y_train)
 
-#     return df
+    predictions = model.predict(X_test)
+    print(f"\nTrained {model_type.__name__}")
+    print("\nModel Accuracy:", accuracy_score(y_test, predictions) * 100, "%")
+    print("Classification Report:\n", classification_report(y_test, predictions, zero_division=0))
 
-# if __name__ == "__main__":
-#     dataset()
+    # Save the trained model
+    model_filename = f"{model_type.__name__}_model.pkl"
+    joblib.dump(model, model_filename)
+    print(f"Model saved as {model_filename}")
 
-# def preprocess_data():
-
-#     columns = [f'b.{i}' for i in range(42)] + ['outcome']
-#     # Load the dataset 
-#     df = pd.read_csv(r'Data\connect-4.data\connect-4.data', names=columns)
-    
-#     # Mapping numeric values
-#     mapping = {'x': 1, 'o': -1, 'b': 0}
-#     encoded_df = df.copy() 
-#     encoded_df.iloc[:, :-1] = encoded_df.iloc[:, :-1].map(mapping.get)
-
-#     print("Shape of encoded_df:", encoded_df.shape)
-#     print(encoded_df.head())
+    return model
 
 def convert_to_game_moves(flat_board):
     board = np.array(flat_board).reshape(6, 7)
@@ -48,7 +43,7 @@ def convert_to_game_moves(flat_board):
             moves.append(col)
     return moves
 
-def build_state_action_dataset():
+def data_set_prep():
     columns = [f'b.{i}' for i in range(42)] + ['outcome']
     df = pd.read_csv(r'Data\connect-4.data\connect-4.data', names=columns)
 
@@ -78,61 +73,194 @@ def build_state_action_dataset():
 
     print("Dataset built:")
     print(f"Total training samples: {X_data.shape[0]}")
-    print("Example board:", X_data[0])
+    # print("Example board:", X_data[0])
     print("Inferred move for that board:", y_data[0])
     return X_data, y_data
 
-def split_dataset(X, y, test_size=0.2, random_state=42):
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=random_state, shuffle=True
-    )
 
-    print("Train set:", X_train.shape, y_train.shape)
-    print("Test set:", X_test.shape, y_test.shape)
+def train_model(X, y, model_type=SVC, **model_kwargs):
+    # Normalize the dataset
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
 
-    return X_train, X_test, y_train, y_test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
+    model = model_type(**model_kwargs)
+    print(f"Training {model_type.__name__} model...")
+    model.fit(X_train, y_train)
+
+    predictions = model.predict(X_test)
+    print(f"\nTrained {model_type.__name__}")
+    print("\nModel Accuracy:", accuracy_score(y_test, predictions) * 100, "%")
+    print("Classification Report:\n", classification_report(y_test, predictions, zero_division=0))
+
+    # Save the trained model
+    model_filename = f"{model_type.__name__}_model.pkl"
+    joblib.dump(model, model_filename)
+    print(f"Model saved as {model_filename}")
+
+    return model
+
+# def train_model(X, y, model_type=SVC, **model_kwargs):
+#     # Define the model filename
+#     model_filename = f"{model_type.__name__}_model.pkl"
+
+#     # Check if the model file already exists
+#     if os.path.exists(model_filename):
+#         print(f"Model file {model_filename} already exists. Loading the model...")
+#         model = joblib.load(model_filename)
+#         print(f"Model loaded from {model_filename}")
+#         return model
+
+#     # Normalize the dataset
+#     scaler = StandardScaler()
+#     X = scaler.fit_transform(X)
+
+#     # Split the dataset
+#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
+
+#     # Train the model
+#     model = model_type(**model_kwargs)
+#     print(f"Training {model_type.__name__} model...")
+#     model.fit(X_train, y_train)
+
+#     # Evaluate the model
+#     predictions = model.predict(X_test)
+#     print(f"\nTrained {model_type.__name__}")
+#     print("\nModel Accuracy:", accuracy_score(y_test, predictions) * 100, "%")
+#     print("Classification Report:\n", classification_report(y_test, predictions, zero_division=0))
+
+#     # Save the trained model
+#     joblib.dump(model, model_filename)
+#     print(f"Model saved as {model_filename}")
+
+#     return model
+
+def predict_move(board, model):
+    board_arr = np.array(board).reshape(1, -1)
+    predicted_move = int(round(model.predict(board_arr)[0]))
+    return max(0, min(6, predicted_move))
+
+def choose_move(game, model, player=1):
+    opponent = -player
+    player_map = {1: "●", -1: "○"}
+    opponent_symbol = player_map[opponent]
+    available_cols = game.get_available_moves(game.board)
+
+    # Check if the AI can block the opponent's winning move
+    for col in available_cols:
+        temp_board = game.drop_piece(game.board.copy(), col, opponent_symbol)
+        if temp_board is not None and game.check_winner(opponent_symbol, temp_board):
+            return col  # Block opponent's winning move
+
+    # Use the trained model to predict the next move
+    flat_board = np.where(game.board == "●", 1,
+                          np.where(game.board == "○", -1, 0)).flatten()
+    turn_count = np.count_nonzero(flat_board)
+    input_features = np.append(flat_board, turn_count)
+
+    # Predict the move using the trained model
+    predicted_move = predict_move(input_features, model)
+
+    # Ensure the predicted move is valid
+    if predicted_move in available_cols:
+        return predicted_move
+    else:
+        # Default to a random valid move if the prediction is invalid
+        return np.random.choice(available_cols) if available_cols else None
+
+def play_game(model):
+    game = Connect4()
+    current_player = 1
+    player_map = {1: "●", -1: "○"}
+
+    while True:
+        game.display_board()
+        available_cols = game.get_available_moves(game.board)
+        print(f"Available columns: {available_cols}")
+
+        if current_player == 1:
+            # Human player move
+            while True:
+                try:
+                    col = int(input("Enter column (0-6): "))
+                    if col in available_cols:
+                        game.make_move(col, player_map[current_player])
+                        break
+                    else:
+                        print("Column full or invalid.")
+                except ValueError:
+                    print("Invalid input.")
+        else:
+            # AI move
+            print("AI's move:")
+            col = choose_move(game, model, player=-1)
+            if col is not None:
+                print(f"AI chooses column {col}")
+                game.make_move(col, player_map[current_player])
+            else:
+                print("AI could not make a move!")
+                break
+
+        if game.check_winner("○"):
+            game.display_board()
+            print("AI wins!")
+            break
+        elif game.check_winner("●"):
+            game.display_board()
+            print("You win!")
+            break
+        elif game.is_full(game.board):
+            game.display_board()
+            print("It's a draw!")
+            break
+
+        # Switch player
+        current_player *= -1
 
 if __name__ == "__main__":
-    # Build the dataset
-    X, y = build_state_action_dataset()
-
-    # Split the dataset
-    X_train, X_test, y_train, y_test = split_dataset(X, y)
-
-model = LinearRegression()
-
-model.fit(X_train, y_train)
-print(model.intercept_)
-
-# Create a DataFrame for coefficients
-coeff_df = pd.DataFrame(model.coef_, columns=['Coefficient'])
-
-# Print the coefficients
-print(coeff_df)
-
-# Predict the next moves
-predictions = model.predict(X_test)
-
-plt.figure(figsize=(8, 6))
-
-# Scatter plot: Actual vs Predicted moves
-plt.scatter(y_test, predictions, edgecolor='black', alpha=0.7, color='plum', label='Predicted Moves')
-
-# Regression line (best fit) through predicted vs actual moves
-z = np.polyfit(y_test, predictions, 1)  # Linear fit (degree=1)
-p = np.poly1d(z)
-plt.plot(y_test, p(y_test), color='red', linewidth=2, label='Regression Line')
-
-# Perfect prediction line (y=x)
-plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], linestyle='--', color='green', linewidth=2, label='Perfect Prediction')
-
-# Labels and Title
-plt.xlabel('Actual Next Move (y_test)', fontsize=12, weight='bold')
-plt.ylabel('Predicted Next Move (predictions)', fontsize=12, weight='bold')
-plt.title('Actual vs Predicted Moves in Connect 4', fontsize=14, weight='bold')
-
-plt.legend()
-plt.grid(True, linestyle='--', alpha=0.4)
-plt.show()
+    try:
+        X, y = data_set_prep()
+        # X, y = X[:100000], y[:100000]  # Use only the first 100,000 samples
+        model_choice = input("Choose model (logistic, forest, svc, lsvc): ").strip().lower()
+        
+        if model_choice == "forest":
+            model = train_model(X, y, model_type=RandomForestClassifier, n_estimators=100)
+        elif model_choice == "svc":
+            model = train_model(X, y, model_type=SVC, kernel='linear')
+        elif model_choice == "lsvc":
+            from sklearn.svm import LinearSVC
+            model = train_model(X, y, model_type=LinearSVC)
+        else:
+            model = train_model(X, y, model_type=LogisticRegression)
+        
+        print("Model training completed.")
+        play_game(model)
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
+
+
+# # Visualization
+
+# plt.figure(figsize=(8, 6))
+
+# # # Scatter plot: Actual vs Predicted moves
+# plt.scatter(y_test, predictions, edgecolor='black', alpha=0.7, color='plum', label='Predicted Moves')
+
+# # Regression line (best fit) through predicted vs actual moves
+# z = np.polyfit(y_test, predictions, 1)  # Linear fit (degree=1)
+# p = np.poly1d(z)
+# plt.plot(y_test, p(y_test), color='red', linewidth=2, label='Regression Line')
+
+# # Perfect prediction line (y=x)
+# plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], linestyle='--', color='green', linewidth=2, label='Perfect Prediction')
+
+# # Labels and Title
+# plt.xlabel('Actual Next Move (y_test)', fontsize=12, weight='bold')
+# plt.ylabel('Predicted Next Move (predictions)', fontsize=12, weight='bold')
+# plt.title('Actual vs Predicted Moves in Connect 4', fontsize=14, weight='bold')
+
+# plt.legend()
+# plt.grid(True, linestyle='--', alpha=0.4)
+# plt.show()

@@ -8,8 +8,42 @@ class MiniMax:
         self.opponent_player = "●"
         self.ai_player = "○"
 
+    def chebyshev_distance_heuristic(self, board):
+        """Evaluate the board using Chebyshev distance heuristic."""
+        score = 0
+
+        # Define directions for horizontal, vertical, and diagonal checks
+        directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+
+        for row in range(len(board)):
+            for col in range(len(board[0])):
+                if board[row][col] == self.ai_player:
+                    # Evaluate AI's potential winning move
+                    for dr, dc in directions:
+                        count = 0
+                        for i in range(4):  # Check up to 4 cells in the direction
+                            r, c = row + dr * i, col + dc * i
+                            if 0 <= r < len(board) and 0 <= c < len(board[0]) and board[r][c] == self.ai_player:
+                                count += 1
+                            else:
+                                break
+                        score += count ** 2 
+                elif board[row][col] == self.opponent_player:
+                    # Evaluate opponent's potential winning move
+                    for dr, dc in directions:
+                        count = 0
+                        for i in range(4):  # Check up to 4 cells in the direction
+                            r, c = row + dr * i, col + dc * i
+                            if 0 <= r < len(board) and 0 <= c < len(board[0]) and board[r][c] == self.opponent_player:
+                                count += 1
+                            else:
+                                break
+                        score -= count ** 2
+
+        return score
+
     def minimax(self, board, depth, alpha, beta, is_maximizing, max_depth=5):
-        """Minimax algorithm with Alpha-Beta pruning and Depth Limit."""
+        """Minimax algorithm with Alpha-Beta pruning and Chebyshev Distance Heuristic."""
         if depth >= max_depth or self.game.check_winner(self.ai_player, board) or self.game.check_winner(self.opponent_player, board) or self.game.is_full(board):
             if self.game.check_winner(self.ai_player, board):
                 return 10 - depth
@@ -17,7 +51,7 @@ class MiniMax:
                 return depth - 10
             elif self.game.is_full(board):
                 return 0
-            return 0  # Return 0 if max depth is reached and no winner
+            return self.chebyshev_distance_heuristic(board)  # Use heuristic for non-terminal states
 
         if is_maximizing:
             max_eval = float('-inf')
