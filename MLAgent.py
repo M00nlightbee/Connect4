@@ -1,13 +1,21 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from Terminal_Version.Connect4 import Connect4
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import (
+    StandardScaler,
+    MinMaxScaler,
+    MaxAbsScaler,
+    RobustScaler,
+    QuantileTransformer,
+    PowerTransformer,
+)
 import joblib
 import os
 
@@ -55,27 +63,54 @@ def data_set_prep():
     return X_data, y_data
 
 
-def train_model(X, y, model_type=SVC, **model_kwargs):
-    # Normalize the dataset
-    scaler = StandardScaler()
-    X = scaler.fit_transform(X)
+def train_model(X, y, model_type=SVC, scaler_type='standard', cv_folds=5, **model_kwargs):
+    # Select scaler
+    if scaler_type == 'standard':
+        scaler = StandardScaler()
+    elif scaler_type == 'minmax':
+        scaler = MinMaxScaler()
+    elif scaler_type == 'maxabs':
+        scaler = MaxAbsScaler()
+    elif scaler_type == 'robust':
+        scaler = RobustScaler()
+    elif scaler_type == 'quantile':
+        scaler = QuantileTransformer(output_distribution='uniform')
+    elif scaler_type == 'quantile-normal':
+        scaler = QuantileTransformer(output_distribution='normal')
+    elif scaler_type == 'power':
+        scaler = PowerTransformer(method='yeo-johnson')
+    else:
+        raise ValueError(f"Unsupported scaler_type: {scaler_type}")
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
+    # Normalize features
+    X_scaled = scaler.fit_transform(X)
+
+    # Split for hold-out test evaluation
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_scaled, y, test_size=0.2, random_state=42, shuffle=True
+    )
+
+    # Instantiate model
     model = model_type(**model_kwargs)
-    print(f"Training {model_type.__name__} model...")
+    print(f"\nTraining {model_type.__name__} with {scaler_type} scaler...")
+
+    # Cross-validation
+    cv_scores = cross_val_score(model, X_train, y_train, cv=cv_folds)
+    print(f"Cross-Validation (k={cv_folds}) Accuracy: {cv_scores.mean() * 100:.2f}% ± {cv_scores.std() * 100:.2f}%")
+
+    # Final fit on full training set
     model.fit(X_train, y_train)
 
+    # Hold-out test evaluation
     predictions = model.predict(X_test)
-    print(f"\nTrained {model_type.__name__}")
-    print("\nModel Accuracy:", accuracy_score(y_test, predictions) * 100, "%")
-    print("Classification Report:\n", classification_report(y_test, predictions, zero_division=0))
+    accuracy = accuracy_score(y_test, predictions)
+    report = classification_report(y_test, predictions, zero_division=0)
 
-    # Save the trained model
-    model_filename = f"{model_type.__name__}_model.pkl"
-    joblib.dump(model, model_filename)
-    print(f"Model saved as {model_filename}")
+    print(f"Hold-out Test Accuracy: {accuracy * 100:.2f}%")
+    print("Classification Report:\n", report)
 
     return model
+
 
 # def train_model(X, y, model_type=SVC, **model_kwargs):
 #     # Define the model filename
@@ -194,26 +229,26 @@ def play_game(model):
         # Switch player
         current_player *= -1
 
-if __name__ == "__main__":
-    try:
-        X, y = data_set_prep()
-        X, y = X[:100000], y[:100000]  # Use only the first 100,000 samples
-        model_choice = input("Choose model (logistic, forest, svc, lsvc): ").strip().lower()
+# if __name__ == "__main__":
+#     try:
+#         X, y = data_set_prep()
+#         # X, y = X[:50000], y[:50000]  # Use only the first 100,000 samples
+#         model_choice = input("Choose model (logistic, forest, svc, lsvc): ").strip().lower()
         
-        if model_choice == "forest":
-            model = train_model(X, y, model_type=RandomForestClassifier, n_estimators=100)
-        elif model_choice == "svc":
-            model = train_model(X, y, model_type=SVC, kernel='linear')
-        elif model_choice == "lsvc":
-            from sklearn.svm import LinearSVC
-            model = train_model(X, y, model_type=LinearSVC)
-        else:
-            model = train_model(X, y, model_type=LogisticRegression)
+#         if model_choice == "forest":
+#             model = train_model(X, y, model_type=RandomForestClassifier, n_estimators=10000)
+#         elif model_choice == "svc":
+#             model = train_model(X, y, model_type=SVC, kernel='linear')
+#         elif model_choice == "lsvc":
+#             from sklearn.svm import LinearSVC
+#             model = train_model(X, y, model_type=LinearSVC)
+#         else:
+#             model = train_model(X, y, model_type=LogisticRegression)
         
-        print("Model training completed.")
-        play_game(model)
-    except Exception as e:
-        print(f"An error occurred: {e}")
+#         print("Model training completed.")
+#         play_game(model)
+#     except Exception as e:
+#         print(f"An error occurred: {e}")
 
 
 
@@ -241,3 +276,41 @@ if __name__ == "__main__":
 # plt.legend()
 # plt.grid(True, linestyle='--', alpha=0.4)
 # plt.show()
+
+
+if __name__ == "__main__":
+    try:
+        X, y = data_set_prep()
+
+        model_choice = input("Choose model (logistic, forest, svc, lsvc): ").strip().lower()
+
+        if model_choice == "forest":
+            model_type = RandomForestClassifier
+            model_kwargs = {"n_estimators": 1000}
+        elif model_choice == "lsvc":
+            from sklearn.svm import LinearSVC
+            model_type = LinearSVC
+            model_kwargs = {}
+        else:
+            model_type = LogisticRegression
+            model_kwargs = {"max_iter": 1000}
+
+        scaler_types = [
+            'standard',
+            'minmax',
+            'maxabs',
+            'robust',
+            'quantile',
+            'quantile-normal',
+            'power'
+        ]
+
+        for scaler_type in scaler_types:
+            print(f"\n--- Training with scaler: {scaler_type} ---")
+            model = train_model(X, y, model_type=model_type, scaler_type=scaler_type, **model_kwargs)
+
+        print("\nAll models trained with different scalers.")
+        # play_game(model)  # This will use the *last* trained model
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
