@@ -39,10 +39,13 @@ class MiniMax:
                             else:
                                 break
                         score -= count ** 2
+        # Blocking opponent's winning moves
+        if self.game.check_winner(self.opponent_player, board):
+            score -=1000
 
         return score
 
-    def minimax(self, board, depth, alpha, beta, is_maximizing, max_depth=5):
+    def minimax(self, board, depth, alpha, beta, is_maximizing, max_depth=7):
         """Minimax algorithm with Alpha-Beta pruning and Chebyshev Distance Heuristic."""
         if depth >= max_depth or self.game.check_winner(self.ai_player, board) or self.game.check_winner(self.opponent_player, board) or self.game.is_full(board):
             if self.game.check_winner(self.ai_player, board):
@@ -51,7 +54,7 @@ class MiniMax:
                 return depth - 10
             elif self.game.is_full(board):
                 return 0
-            return self.chebyshev_distance_heuristic(board)  # Use heuristic for non-terminal states
+            return self.chebyshev_distance_heuristic(board)
 
         if is_maximizing:
             max_eval = float('-inf')
@@ -82,8 +85,18 @@ class MiniMax:
         best_col = None
 
         available_moves = self.game.get_available_moves(self.game.board)
-        print(f"Available moves for AI: {available_moves}")
+        # print(f"Available moves for AI: {available_moves}")
 
+        # Check for immediate winning or blocking moves
+        for col in available_moves:
+            temp_board = self.game.drop_piece(self.game.board, col, self.ai_player)
+            if temp_board is not None and self.game.check_winner(self.ai_player, temp_board):
+                return col  # Immediate win
+            temp_board = self.game.drop_piece(self.game.board, col, self.opponent_player)
+            if temp_board is not None and self.game.check_winner(self.opponent_player, temp_board):
+                return col  # Block opponent's win
+
+        # Other moves
         for col in available_moves:
             temp_board = self.game.drop_piece(self.game.board, col, self.ai_player)
             if temp_board is not None:
@@ -96,9 +109,9 @@ class MiniMax:
         if best_col is None and available_moves:
             # Default: Choose a random valid column if no best move is found
             best_col = random.choice(available_moves)
-            print(f"No optimal move found. Random column: {best_col}")
+            # print(f"No optimal move found. Random column: {best_col}")
 
-        print(f"Best move selected: {best_col}, Score: {best_val}")
+        # print(f"Best move selected: {best_col}, Score: {best_val}")
         return best_col
 
     

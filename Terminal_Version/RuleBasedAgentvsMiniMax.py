@@ -1,13 +1,11 @@
 # Smart (Rule-based) agent vs mini-max agent. 
 
 import time
-import random
-import numpy as np
 from Connect4 import Connect4
 from RuleBasedAgent import RuleBasedAgent
 from MiniMax import MiniMax
 
-def play_game(verbose=False):
+def play_game(verbose=True):
     game = Connect4()
     minimax_agent = MiniMax(game)
     rule_based = RuleBasedAgent(game)
@@ -48,7 +46,7 @@ if __name__ == "__main__":
     minimax_wins = 0
     rule_based_wins = 0
     draws = 0
-    total_games = 100
+    total_games = 1
 
     for i in range(total_games):
         game_result = play_game()

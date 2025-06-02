@@ -1,8 +1,6 @@
 # Random agent vs Smart (Rule-based) agent. 
 
 import time
-import random
-import numpy as np
 from Connect4 import Connect4
 from RandomAgent import RandomAgent
 from RuleBasedAgent import RuleBasedAgent
