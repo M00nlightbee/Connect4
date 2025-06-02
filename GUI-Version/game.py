@@ -7,17 +7,23 @@ import random
 import pygame
 from Terminal_Version.Connect4 import Connect4
 from agents import RandomAgent, RuleBasedAgent, BFSAgent, AStarAgent, MiniMax
+import numpy as np
 
 ROW_COUNT = 6
 COLUMN_COUNT = 7
-SQUARESIZE = 100
+SQUARESIZE = 120
 RADIUS = SQUARESIZE // 2 - 5
-WIDTH = COLUMN_COUNT * SQUARESIZE
-HEIGHT = (ROW_COUNT + 1) * SQUARESIZE
-SIZE = (WIDTH, HEIGHT)
+# WIDTH = COLUMN_COUNT * SQUARESIZE
+# HEIGHT = (ROW_COUNT + 1) * SQUARESIZE
+# SIZE = (WIDTH, HEIGHT)
+
+# MENU_WIDTH = 300
+# WIDTH = COLUMN_COUNT * SQUARESIZE + MENU_WIDTH
+# SIZE = (WIDTH, HEIGHT)
 
 MENU_WIDTH = 300
 WIDTH = COLUMN_COUNT * SQUARESIZE + MENU_WIDTH
+HEIGHT = (ROW_COUNT + 1) * SQUARESIZE
 SIZE = (WIDTH, HEIGHT)
 
 # The board
@@ -137,8 +143,8 @@ def initialize_game_and_agents(selected_mode):
 
 
 def main():
-    default_mode = 0  # You can set any mode here, e.g., 0 = Player vs RandomAgent
-    game, agent, agent1, agent2 = initialize_game_and_agents(default_mode)
+    selected_mode = 0
+    game, agent, agent1, agent2 = initialize_game_and_agents(selected_mode)
     game_over = False
     menu = GameModeMenu(COLUMN_COUNT * SQUARESIZE)
 
@@ -156,7 +162,7 @@ def main():
 
             # Restart Button Clicked
             if mode_selected == "restart":
-                selected_mode = menu.get_mode()
+                selected_mode = menu.get_mode() 
                 game, agent, agent1, agent2 = initialize_game_and_agents(selected_mode)
                 game_over = False
                 continue
@@ -166,7 +172,8 @@ def main():
                 if mode_selected == 7:
                     pygame.quit()
                     sys.exit()
-                game, agent, agent1, agent2 = initialize_game_and_agents(mode_selected)
+                selected_mode = mode_selected
+                game, agent, agent1, agent2 = initialize_game_and_agents(selected_mode)
                 game_over = False
                 continue
 
@@ -187,67 +194,22 @@ def main():
                             game.current_player = "○"
 
         # AI move
-        if not game_over and game.current_player == "○":
+        if not game_over and (selected_mode in [0, 1, 2, 3, 4] and game.current_player == "○"):
             pygame.time.wait(500)
-            selected_mode = menu.get_mode()
-
-            if selected_mode in [0, 1, 2, 3, 4]:
-                if agent is not None:
-                    if selected_mode == 0:  # Random Agent
-                        col = agent.random_agent_move(game.board)
-                    elif selected_mode == 1:  # Rule-Based Agent
-                        col = agent.rule_based_agent(game.board)
-                    elif selected_mode == 2:  # BFS Agent
-                        col = agent.bfs_ai_move(game.board, player="○", opponent="●")
-                    elif selected_mode == 3:  # A* Agent
-                        col = agent.best_move()
-                    elif selected_mode == 4:  # MiniMax Agent
-                        col = agent.best_move()
-                    ai_name = agent.name
-                else:
-                    raise ValueError("Agent is not initialized for the selected mode.")
-            elif selected_mode in [5, 6]:
-                while not game_over:
-                    pygame.time.wait(500)
-
-                    if game.current_player == "●" and agent1 is not None:
-                        if selected_mode == 5:
-                            col = agent1.random_agent_move(game.board)
-                        elif selected_mode == 6:
-                            col = agent1.rule_based_agent(game.board)
-                        ai_name = agent1.name
-                    elif game.current_player == "○" and agent2 is not None:
-                        if selected_mode == 5:
-                            col = agent2.rule_based_agent(game.board)
-                        elif selected_mode == 6:
-                            col = agent2.best_move()
-                        ai_name = agent2.name
-                    else:
-                        raise ValueError("Agents are not properly initialized for AI vs AI mode.")
-
-                    game.make_move(col, game.current_player)
-
-                    # Check for a winner
-                    if game.check_winner(game.current_player):
-                        label = font.render(f"{ai_name} wins!", 1, (255, 255, 0))
-                        screen.blit(label, (40, 10))
-                        pygame.display.update()
-                        pygame.time.wait(3000)
-                        game_over = True
-                    elif game.is_full(game.board):
-                        label = font.render("Draw!", 1, (255, 255, 255))
-                        screen.blit(label, (40, 10))
-                        pygame.display.update()
-                        pygame.time.wait(3000)
-                        game_over = True
-                    else:
-                        # Switch to the other player
-                        game.current_player = "●" if game.current_player == "○" else "○"
-
-                    draw_board(game.board)
+            if agent is not None:
+                if selected_mode == 0:  # Random Agent
+                    col = agent.random_agent_move(game.board)
+                elif selected_mode == 1:  # Rule-Based Agent
+                    col = agent.rule_based_agent(game.board)
+                elif selected_mode == 2:  # BFS Agent
+                    col = agent.bfs_ai_move(game.board, player="○", opponent="●")
+                elif selected_mode == 3:  # A* Agent
+                    col = agent.best_move()
+                elif selected_mode == 4:  # MiniMax Agent
+                    col = agent.best_move()
+                ai_name = agent.name
             else:
-                col = random.choice(game.get_available_moves(game.board))
-                ai_name = "Random"
+                raise ValueError("Agent is not initialized for the selected mode.")
 
             game.make_move(col, "○")
             if game.check_winner("○"):
@@ -258,6 +220,49 @@ def main():
                 game_over = True
             else:
                 game.current_player = "●"
+
+        # AI vs AI move (one move per frame)
+        elif not game_over and selected_mode in [5, 6]:
+            pygame.time.wait(500)
+            if game.current_player == "●" and agent1 is not None:
+                if selected_mode == 5:
+                    col = agent1.random_agent_move(game.board)
+                    ai_name = agent1.name
+                elif selected_mode == 6:
+                    col = agent1.rule_based_agent(game.board)
+                    ai_name = agent1.name
+            elif game.current_player == "○" and agent2 is not None:
+                if selected_mode == 5:
+                    col = agent2.rule_based_agent(game.board)
+                    ai_name = agent2.name
+                elif selected_mode == 6:
+                    # agent2.game.board = np.copy(game.board)
+                    # col = agent2.best_move()
+                    col = agent2.best_move()
+                    ai_name = agent2.name
+            else:
+                raise ValueError("Agents are not properly initialized for AI vs AI mode.")
+
+            game.make_move(col, game.current_player)
+
+            # Check for a winner
+            if game.check_winner(game.current_player):
+                label = font.render(f"{ai_name} wins!", 1, (255, 255, 0))
+                screen.blit(label, (40, 10))
+                pygame.display.update()
+                pygame.time.wait(3000)
+                game_over = True
+            elif game.is_full(game.board):
+                label = font.render("Draw!", 1, (255, 255, 255))
+                screen.blit(label, (40, 10))
+                pygame.display.update()
+                pygame.time.wait(3000)
+                game_over = True
+            else:
+                # Switch to the other player
+                game.current_player = "●" if game.current_player == "○" else "○"
+
+            draw_board(game.board)
 
         # Check for draw
         if game.is_full(game.board):

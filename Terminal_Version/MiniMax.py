@@ -79,41 +79,37 @@ class MiniMax:
                         break  # Alpha cut-off
             return min_eval
 
-    def best_move(self):
+    def best_move(self, board=None):
         """Determine the best move for the AI player using Minimax."""
+        if board is None:
+            board = self.game.board
         best_val = float('-inf')
         best_col = None
 
-        available_moves = self.game.get_available_moves(self.game.board)
-        # print(f"Available moves for AI: {available_moves}")
+        available_moves = self.game.get_available_moves(board)
 
         # Check for immediate winning or blocking moves
         for col in available_moves:
-            temp_board = self.game.drop_piece(self.game.board, col, self.ai_player)
+            temp_board = self.game.drop_piece(board, col, self.ai_player)
             if temp_board is not None and self.game.check_winner(self.ai_player, temp_board):
-                return col  # Immediate win
-            temp_board = self.game.drop_piece(self.game.board, col, self.opponent_player)
+                return col
+            temp_board = self.game.drop_piece(board, col, self.opponent_player)
             if temp_board is not None and self.game.check_winner(self.opponent_player, temp_board):
-                return col  # Block opponent's win
+                return col
 
         # Other moves
         for col in available_moves:
-            temp_board = self.game.drop_piece(self.game.board, col, self.ai_player)
+            temp_board = self.game.drop_piece(board, col, self.ai_player)
             if temp_board is not None:
                 move_val = self.minimax(temp_board, 0, float('-inf'), float('inf'), False)
-                # print(f"Column: {col}, Move Value: {move_val}")  # Debugging
                 if move_val > best_val:
                     best_val = move_val
                     best_col = col
 
         if best_col is None and available_moves:
-            # Default: Choose a random valid column if no best move is found
             best_col = random.choice(available_moves)
-            # print(f"No optimal move found. Random column: {best_col}")
 
-        # print(f"Best move selected: {best_col}, Score: {best_val}")
         return best_col
-
     
 
 def play_game():
