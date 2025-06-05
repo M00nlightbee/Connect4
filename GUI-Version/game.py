@@ -318,7 +318,7 @@ def main(selected_mode):
                             label = font.render("You win!", 1, (255, 0, 0))
                             screen.blit(label, (40, 10))
                             pygame.display.update()
-                            pygame.time.wait(5000)
+                            pygame.time.wait(3000)
                             game_over = True
                         else:
                             game.current_player = "○"
@@ -380,13 +380,13 @@ def main(selected_mode):
                 label = font.render(f"{ai_name} wins!", 1, (255, 255, 0))
                 screen.blit(label, (40, 10))
                 pygame.display.update()
-                pygame.time.wait(5000)
+                pygame.time.wait(3000)
                 game_over = True
             elif game.is_full(game.board):
                 label = font.render("Draw!", 1, (255, 255, 255))
                 screen.blit(label, (40, 10))
                 pygame.display.update()
-                pygame.time.wait(5000)
+                pygame.time.wait(3000)
                 game_over = True
             else:
                 # Switch to the other player
