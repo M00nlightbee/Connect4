@@ -2,7 +2,6 @@ import os
 import sys
 import webbrowser
 
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import random
