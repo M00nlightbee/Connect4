@@ -1,5 +1,7 @@
 import os
 import sys
+import webbrowser
+
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -9,20 +11,16 @@ from Terminal_Version.Connect4 import Connect4
 from agents import RandomAgent, RuleBasedAgent, BFSAgent, AStarAgent, MiniMax
 import numpy as np
 
+# Define the GitHub URL
+GITHUB_URL = "https://github.com/M00nlightbee/Connect4"
+
 ROW_COUNT = 6
 COLUMN_COUNT = 7
-SQUARESIZE = 120
+SQUARESIZE = 100
 RADIUS = SQUARESIZE // 2 - 5
-# WIDTH = COLUMN_COUNT * SQUARESIZE
-# HEIGHT = (ROW_COUNT + 1) * SQUARESIZE
-# SIZE = (WIDTH, HEIGHT)
 
-# MENU_WIDTH = 300
-# WIDTH = COLUMN_COUNT * SQUARESIZE + MENU_WIDTH
-# SIZE = (WIDTH, HEIGHT)
-
-MENU_WIDTH = 300
-WIDTH = COLUMN_COUNT * SQUARESIZE + MENU_WIDTH
+MENU_WIDTH = 220
+WIDTH = (COLUMN_COUNT + 1) * SQUARESIZE + MENU_WIDTH
 HEIGHT = (ROW_COUNT + 1) * SQUARESIZE
 SIZE = (WIDTH, HEIGHT)
 
@@ -71,38 +69,43 @@ class GameModeMenu:
         self.mode_button_rect = pygame.Rect(self.x_offset + 20, HEIGHT - 180, 260, 40)
         self.mode_hovered = False
 
-
-
     def draw(self):
+        self.draw_options()
+        self.draw_restart_button()
+        self.draw_back_button()
+        self.draw_mode_button()
+
+    def draw_options(self):
         for i, option in enumerate(self.options):
-            rect = pygame.Rect(self.x_offset + 20, 40 + i * 40, 20, 20)
+            rect = pygame.Rect(self.x_offset - 350, 40 + i * 40, 20, 20)
             pygame.draw.rect(screen, (255, 255, 255), rect, 2)
             if self.selected == i:
                 pygame.draw.circle(screen, (255, 255, 255), rect.center, 8)
 
             label = self.font.render(option, True, (255, 255, 255))
-            screen.blit(label, (self.x_offset + 50, 35 + i * 40))
+            screen.blit(label, (self.x_offset - 320, 35 + i * 40))
 
-        # Draw Restart Button
+    def draw_restart_button(self):
         color = (150, 200, 150) if self.restart_hovered else (100, 180, 100)
         pygame.draw.rect(screen, color, self.restart_button_rect, border_radius=8)
         restart_text = self.font.render("Restart Game", True, (0, 0, 0))
         text_rect = restart_text.get_rect(center=self.restart_button_rect.center)
         screen.blit(restart_text, text_rect)
 
-        # Draw Back Button
+    def draw_back_button(self):
         back_color = (200, 150, 150) if self.back_hovered else (180, 100, 100)
         pygame.draw.rect(screen, back_color, self.back_button_rect, border_radius=8)
-        back_text = self.font.render("Back", True, (0, 0, 0))
+        back_text = self.font.render("Main Menu", True, (0, 0, 0))
         back_text_rect = back_text.get_rect(center=self.back_button_rect.center)
         screen.blit(back_text, back_text_rect)
 
-        # Draw Options Button
+    def draw_mode_button(self):
         mode_color = (150, 150, 200) if self.mode_hovered else (100, 100, 180)
         pygame.draw.rect(screen, mode_color, self.mode_button_rect, border_radius=8)
         mode_text = self.font.render("Game Mode", True, (0, 0, 0))
         mode_text_rect = mode_text.get_rect(center=self.mode_button_rect.center)
         screen.blit(mode_text, mode_text_rect)
+
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEMOTION:
@@ -120,7 +123,7 @@ class GameModeMenu:
                 return "mode"
 
             for i in range(len(self.options)):
-                rect = pygame.Rect(self.x_offset + 20, 40 + i * 40, 20, 20)
+                rect = pygame.Rect(self.x_offset - 350, 40 + i * 40, 20, 20)
                 if rect.collidepoint(event.pos):
                     self.selected = i
                     return i
@@ -166,13 +169,12 @@ def initialize_game_and_agents(selected_mode):
 def main_menu():
     title_font = pygame.font.SysFont("monospace", 60)
     menu_font = pygame.font.SysFont("monospace", 40)
+    footer_font = pygame.font.SysFont("monospace", 30)
 
     # Define button rectangles
     play_button_rect = pygame.Rect(WIDTH // 2 - 130, 250, 260, 60)
     quit_button_rect = pygame.Rect(WIDTH // 2 - 130, 330, 260, 60)
-
-    play_hovered = False
-    quit_hovered = False
+    footer_rect = pygame.Rect(0, HEIGHT - 50, WIDTH, 50)
 
     while True:
         screen.fill((0, 0, 0))
@@ -185,37 +187,50 @@ def main_menu():
         mouse_pos = pygame.mouse.get_pos()
         play_hovered = play_button_rect.collidepoint(mouse_pos)
         quit_hovered = quit_button_rect.collidepoint(mouse_pos)
+        footer_hovered = footer_rect.collidepoint(mouse_pos)
+
 
         # Button colors
         play_color = (150, 200, 150) if play_hovered else (100, 180, 100)
         quit_color = (200, 150, 150) if quit_hovered else (180, 100, 100)
+        footer_color = (150, 150, 200) if footer_hovered else (100, 100, 180)
+
 
         # Draw buttons
         pygame.draw.rect(screen, play_color, play_button_rect, border_radius=8)
         pygame.draw.rect(screen, quit_color, quit_button_rect, border_radius=8)
+        pygame.draw.rect(screen, footer_color, footer_rect)
 
         # Draw button text
         play_text = menu_font.render("Play Game", True, (0, 0, 0))
         quit_text = menu_font.render("Quit", True, (0, 0, 0))
+        footer_text = "© 2025 Connect 4 Game | GitHub"
         screen.blit(play_text, play_text.get_rect(center=play_button_rect.center))
         screen.blit(quit_text, quit_text.get_rect(center=quit_button_rect.center))
+        # screen.blit(footer_font.render(footer_text, True, (255, 255, 255)),
+        #             (footer_rect.x + 10, footer_rect.y + 10))
+        footer_surface = footer_font.render(footer_text, True, (255, 255, 255))
+        footer_text_rect = footer_surface.get_rect(center=footer_rect.center)
+        screen.blit(footer_surface, footer_text_rect)
 
         pygame.display.update()
 
-        # Event handling
+        # Event handling including footer click
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 if play_button_rect.collidepoint(event.pos):
-                    main(0)  # Start game
+                    options_menu()  # Show options menu after starting the game
                 elif quit_button_rect.collidepoint(event.pos):
                     pygame.quit()
                     sys.exit()
+                elif footer_rect.collidepoint(event.pos):
+                    webbrowser.open(GITHUB_URL)
 
-            if event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
@@ -232,9 +247,11 @@ def options_menu():
         "Quit"
     ]
     menu = GameModeMenu(COLUMN_COUNT * SQUARESIZE, options)
+
     while True:
         screen.fill((0, 0, 0))
-        menu.draw()
+        menu.draw_options()
+        menu.draw_back_button()
         pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -251,11 +268,10 @@ def options_menu():
                 if mode_selected == 7:
                     pygame.quit()
                     sys.exit()
-                main(mode_selected)  # Only here can you start a game with a selected mode
+                main(mode_selected) # Start the game with the selected mode
                 return
 
 def main(selected_mode):
-    # Pass an empty options list since options are not needed in main
     game, agent, agent1, agent2 = initialize_game_and_agents(selected_mode)
     game_over = False
     menu = GameModeMenu(COLUMN_COUNT * SQUARESIZE)
@@ -275,7 +291,7 @@ def main(selected_mode):
                 if mode_selected == "restart":
                     game, agent, agent1, agent2 = initialize_game_and_agents(selected_mode)
                     game_over = False
-                    break  # break out of the event loop
+                    break 
 
                 if mode_selected == "back":
                     main_menu()
@@ -288,7 +304,6 @@ def main(selected_mode):
                 if isinstance(mode_selected, int) and mode_selected == 7:
                     pygame.quit()
                     sys.exit()
-                # No need to continue, just break after handling
                 break
 
             # Human player's move
@@ -304,7 +319,7 @@ def main(selected_mode):
                             label = font.render("You win!", 1, (255, 0, 0))
                             screen.blit(label, (40, 10))
                             pygame.display.update()
-                            pygame.time.wait(3000)
+                            pygame.time.wait(5000)
                             game_over = True
                         else:
                             game.current_player = "○"
@@ -366,13 +381,13 @@ def main(selected_mode):
                 label = font.render(f"{ai_name} wins!", 1, (255, 255, 0))
                 screen.blit(label, (40, 10))
                 pygame.display.update()
-                pygame.time.wait(3000)
+                pygame.time.wait(5000)
                 game_over = True
             elif game.is_full(game.board):
                 label = font.render("Draw!", 1, (255, 255, 255))
                 screen.blit(label, (40, 10))
                 pygame.display.update()
-                pygame.time.wait(3000)
+                pygame.time.wait(5000)
                 game_over = True
             else:
                 # Switch to the other player
@@ -389,6 +404,7 @@ def main(selected_mode):
             game_over = True
 
         pygame.display.update()
+
 
 if __name__ == "__main__":
     main_menu()
