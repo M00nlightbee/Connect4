@@ -108,23 +108,21 @@ class AStarAgent:
         self.ai_player = "○"
 
     def evaluate_board(self, board):
-        """Heuristic function: Assigns a score to the board state."""
-        if self.game.check_winner(self.ai_player, board):
-            return 100
-        if self.game.check_winner(self.opponent_player, board):
-            return -100
+        """Evaluate the board state for A* search."""
         score = 0
-
-        # Center position
-        if board[0, 3] == self.ai_player:
-            score += 50
-        
-        # Corners positions
-        corners = [0, 6]
-        for col in corners:
-            if board[0, col] == self.ai_player:
-                score += 20
-
+        # Center column preference
+        center_col = board[:, 3]
+        score += np.count_nonzero(center_col == self.ai_player) * 3
+        for row in range(6):
+            for col in range(7 - 3):
+                window = board[row, col:col+4]
+                if np.count_nonzero(window == self.ai_player) == 3 and np.count_nonzero(window == " ") == 1:
+                    score += 50
+                elif np.count_nonzero(window == self.ai_player) == 2 and np.count_nonzero(window == " ") == 2:
+                    score += 10
+                # Penalize opponent
+                if np.count_nonzero(window == self.opponent_player) == 3 and np.count_nonzero(window == " ") == 1:
+                    score -= 40
         return score
 
     def a_star_search(self):
@@ -215,7 +213,7 @@ class MiniMax:
 
         return score
 
-    def minimax(self, board, depth, alpha, beta, is_maximizing, max_depth=7):
+    def minimax(self, board, depth, alpha, beta, is_maximizing, max_depth=3):
         """Minimax algorithm with Alpha-Beta pruning and Chebyshev Distance Heuristic."""
         if depth >= max_depth or self.game.check_winner(self.ai_player, board) or self.game.check_winner(self.opponent_player, board) or self.game.is_full(board):
             if self.game.check_winner(self.ai_player, board):
@@ -249,7 +247,7 @@ class MiniMax:
                         break  # Alpha cut-off
             return min_eval
 
-    def best_move(self, board=None):
+    def best_move_minmax(self, board=None):
         """Determine the best move for the AI player using Minimax."""
         if board is None:
             board = self.game.board

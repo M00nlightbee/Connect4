@@ -1,14 +1,14 @@
+# Source: https://www.youtube.com/watch?v=7-cpaJyS-PM, deploying pygame using pygbag
 import os
 import sys
 import webbrowser
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-import random
 import pygame
-from Terminal_Version.Connect4 import Connect4
+# from Terminal_Version.Connect4 import Connect4
+from connect4 import Connect4
 from agents import RandomAgent, RuleBasedAgent, BFSAgent, AStarAgent, MiniMax
-import numpy as np
 
 # Define the GitHub URL
 GITHUB_URL = "https://github.com/M00nlightbee/Connect4"
@@ -160,6 +160,16 @@ def initialize_game_and_agents(selected_mode):
     elif selected_mode == 6:
         agent1 = RuleBasedAgent(game)
         agent1.name = "Rule-Based Agent"
+        agent2 = BFSAgent(game)
+        agent2.name = "BFS Agent"
+    elif selected_mode == 7:
+        agent1 = BFSAgent(game)
+        agent1.name = "BFS Agent"
+        agent2 = AStarAgent(game)
+        agent2.name = "A* Agent"
+    elif selected_mode == 8:
+        agent1 = AStarAgent(game)
+        agent1.name = "A* Agent"
         agent2 = MiniMax(game)
         agent2.name = "MiniMax Agent"
 
@@ -188,7 +198,6 @@ def main_menu():
         quit_hovered = quit_button_rect.collidepoint(mouse_pos)
         footer_hovered = footer_rect.collidepoint(mouse_pos)
 
-
         # Button colors
         play_color = (150, 200, 150) if play_hovered else (100, 180, 100)
         quit_color = (200, 150, 150) if quit_hovered else (180, 100, 100)
@@ -214,25 +223,26 @@ def main_menu():
 
         pygame.display.update()
 
-        # Event handling including footer click
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if play_button_rect.collidepoint(event.pos):
-                    options_menu()  # Show options menu after starting the game
-                elif quit_button_rect.collidepoint(event.pos):
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
                     pygame.quit()
-                    sys.exit()
-                elif footer_rect.collidepoint(event.pos):
-                    webbrowser.open(GITHUB_URL)
+                    running = False
 
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if play_button_rect.collidepoint(event.pos):
+                        options_menu()  # Show options menu after starting the game
+                    elif quit_button_rect.collidepoint(event.pos):
+                        pygame.quit()
+                        running = False
+                    elif footer_rect.collidepoint(event.pos):
+                        webbrowser.open(GITHUB_URL)
+
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        running = False
 
 def options_menu():
     options = [
@@ -242,70 +252,64 @@ def options_menu():
         "Player vs A* Agent",
         "Player vs MiniMax Agent",
         "AI vs AI (Random vs Rule-Based Agent)",
-        "AI vs AI (Rule-Based vs MiniMax Agent)",
+        "AI vs AI (Rule-Based vs BFS Agent)",
+        "AI vs AI (BFS vs A* Agent)",
+        "AI vs AI (A* vs MiniMax Agent)",
         "Quit"
     ]
     menu = GameModeMenu(COLUMN_COUNT * SQUARESIZE, options)
+    running = True
 
-    while True:
+    while running:
         screen.fill((0, 0, 0))
         menu.draw_options()
         menu.draw_back_button()
         pygame.display.update()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-            mode_selected = menu.handle_event(event)
-
-            if mode_selected == "back":
-                main_menu()
-                return  # Back to main menu
-
-            if isinstance(mode_selected, int):
-                if mode_selected == 7:
-                    pygame.quit()
-                    sys.exit()
-                main(mode_selected) # Start the game with the selected mode
                 return
 
+            mode_selected = menu.handle_event(event)
+            if mode_selected == "back":
+                main_menu()
+                return
+            if isinstance(mode_selected, int):
+                if mode_selected == 9:  # Quit
+                    return
+                main(mode_selected)
+                return
+
+# --- Main Game Loop ---
 def main(selected_mode):
     game, agent, agent1, agent2 = initialize_game_and_agents(selected_mode)
     game_over = False
     menu = GameModeMenu(COLUMN_COUNT * SQUARESIZE)
+    running = True
 
-    while True:
+    while running:
         screen.fill((0, 0, 0))
         menu.draw()
         draw_board(game.board)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                running = False
+                return
 
             mode_selected = menu.handle_event(event)
-            if mode_selected is not None:
-                if mode_selected == "restart":
-                    game, agent, agent1, agent2 = initialize_game_and_agents(selected_mode)
-                    game_over = False
-                    break 
-
-                if mode_selected == "back":
-                    main_menu()
-                    return
-
-                if mode_selected == "mode":
-                    options_menu()
-                    return
-
-                if isinstance(mode_selected, int) and mode_selected == 7:
-                    pygame.quit()
-                    sys.exit()
+            if mode_selected == "restart":
+                game, agent, agent1, agent2 = initialize_game_and_agents(selected_mode)
+                game_over = False
                 break
+            elif mode_selected == "back":
+                main_menu()
+                return
+            elif mode_selected == "mode":
+                options_menu()
+                return
 
-            # Human player's move
+            # Human move
             if not game_over and game.current_player == "●" and event.type == pygame.MOUSEBUTTONDOWN:
                 x = event.pos[0]
                 if x < COLUMN_COUNT * SQUARESIZE:
@@ -313,12 +317,11 @@ def main(selected_mode):
                     if col in game.get_available_moves(game.board):
                         game.make_move(col, "●")
                         draw_board(game.board)
-                        pygame.display.update() 
                         if game.check_winner("●"):
                             label = font.render("You win!", 1, (255, 0, 0))
                             screen.blit(label, (40, 10))
                             pygame.display.update()
-                            pygame.time.wait(3000)
+                            pygame.time.wait(1500)
                             game_over = True
                         else:
                             game.current_player = "○"
@@ -336,7 +339,7 @@ def main(selected_mode):
                 elif selected_mode == 3:  # A* Agent
                     col = agent.best_move()
                 elif selected_mode == 4:  # MiniMax Agent
-                    col = agent.best_move(game.board)
+                    col = agent.best_move_minmax(game.board)
                 ai_name = agent.name
             else:
                 raise ValueError("Agent is not initialized for the selected mode.")
@@ -352,7 +355,7 @@ def main(selected_mode):
                 game.current_player = "●"
 
         # AI vs AI move (one move per frame)
-        elif not game_over and selected_mode in [5, 6]:
+        elif not game_over and selected_mode in [5, 6, 7, 8]:
             pygame.time.wait(500)
             if game.current_player == "●" and agent1 is not None:
                 if selected_mode == 5:
@@ -361,14 +364,24 @@ def main(selected_mode):
                 elif selected_mode == 6:
                     col = agent1.rule_based_agent(game.board)
                     ai_name = agent1.name
+                elif selected_mode == 7:
+                    col = agent1.bfs_ai_move(game.board, player="●", opponent="○")
+                    ai_name = agent1.name
+                elif selected_mode == 8:
+                    col = agent1.best_move()
+                    ai_name = agent1.name
             elif game.current_player == "○" and agent2 is not None:
                 if selected_mode == 5:
                     col = agent2.rule_based_agent(game.board)
                     ai_name = agent2.name
                 elif selected_mode == 6:
-                    # agent2.game.board = np.copy(game.board)
-                    # col = agent2.best_move()
-                    col = agent2.best_move(game.board)
+                    col = agent2.bfs_ai_move(game.board, player="○", opponent="●")
+                    ai_name = agent2.name
+                elif selected_mode == 7:
+                    col = agent2.best_move()
+                    ai_name = agent2.name
+                elif selected_mode == 8:
+                    col = agent2.best_move_minmax()
                     ai_name = agent2.name
             else:
                 raise ValueError("Agents are not properly initialized for AI vs AI mode.")
@@ -403,6 +416,7 @@ def main(selected_mode):
             game_over = True
 
         pygame.display.update()
+
 
 
 if __name__ == "__main__":
