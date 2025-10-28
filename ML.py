@@ -11,7 +11,7 @@ import os
 
 class MLAgent:
     def __init__(self, game=None, model_type=MLPClassifier, **model_kwargs):
-        self.game = game  # Store the game instance if needed
+        self.game = game 
         self.model_type = model_type
         self.model_kwargs = model_kwargs
         self.model = None
