@@ -2,7 +2,7 @@ import random
 import numpy as np
 import queue
 import heapq
-from Terminal_Version.Connect4 import Connect4
+from connect4 import Connect4
 
 class RandomAgent:
     # Instantiate class

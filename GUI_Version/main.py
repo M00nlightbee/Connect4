@@ -2,7 +2,6 @@
 import os
 import sys
 import webbrowser
-import asyncio
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -28,12 +27,22 @@ SIZE = (WIDTH, HEIGHT)
 BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 
+# Function to get correct path for assets
+def resource_path(relative_path):
+    try:
+        # PyInstaller stores data in _MEIPASS folder
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 # Load images
 pygame.init()
 screen = pygame.display.set_mode(SIZE)
 pygame.display.set_caption("Connect 4")
-red_img = pygame.image.load("img/red.png")
-yellow_img = pygame.image.load("img/yellow.png")
+red_img = pygame.image.load(resource_path("Img/red.png"))
+yellow_img = pygame.image.load(resource_path("Img/yellow.png"))
 red_img = pygame.transform.scale(red_img, (SQUARESIZE, SQUARESIZE))
 yellow_img = pygame.transform.scale(yellow_img, (SQUARESIZE, SQUARESIZE))
 font = pygame.font.SysFont("monospace", 55)
@@ -186,7 +195,8 @@ def main_menu():
     quit_button_rect = pygame.Rect(WIDTH // 2 - 130, 330, 260, 60)
     footer_rect = pygame.Rect(0, HEIGHT - 50, WIDTH, 50)
 
-    while True:
+    running = True
+    while running:
         screen.fill((0, 0, 0))
 
         # Draw title
@@ -204,7 +214,6 @@ def main_menu():
         quit_color = (200, 150, 150) if quit_hovered else (180, 100, 100)
         footer_color = (150, 150, 200) if footer_hovered else (100, 100, 180)
 
-
         # Draw buttons
         pygame.draw.rect(screen, play_color, play_button_rect, border_radius=8)
         pygame.draw.rect(screen, quit_color, quit_button_rect, border_radius=8)
@@ -213,35 +222,34 @@ def main_menu():
         # Draw button text
         play_text = menu_font.render("Play Game", True, (0, 0, 0))
         quit_text = menu_font.render("Quit", True, (0, 0, 0))
-        footer_text = "© 2025 Connect 4 Game | GitHub"
+        footer_surface = footer_font.render("© 2025 Connect 4 Game | GitHub", True, (255, 255, 255))
         screen.blit(play_text, play_text.get_rect(center=play_button_rect.center))
         screen.blit(quit_text, quit_text.get_rect(center=quit_button_rect.center))
-        # screen.blit(footer_font.render(footer_text, True, (255, 255, 255)),
-        #             (footer_rect.x + 10, footer_rect.y + 10))
-        footer_surface = footer_font.render(footer_text, True, (255, 255, 255))
-        footer_text_rect = footer_surface.get_rect(center=footer_rect.center)
-        screen.blit(footer_surface, footer_text_rect)
+        screen.blit(footer_surface, footer_surface.get_rect(center=footer_rect.center))
 
         pygame.display.update()
 
+        # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                running = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if play_button_rect.collidepoint(event.pos):
-                    options_menu()  # Show options menu after starting the game
+                    options_menu()  # Call options menu
                 elif quit_button_rect.collidepoint(event.pos):
-                    pygame.quit()
-                    return
+                    running = False
                 elif footer_rect.collidepoint(event.pos):
                     webbrowser.open(GITHUB_URL)
 
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        pygame.quit()
-                        sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+
+    # Safe quit
+    pygame.quit()
+    sys.exit()
+
 
 def options_menu():
     options = [
