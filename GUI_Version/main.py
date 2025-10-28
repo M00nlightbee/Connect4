@@ -1,7 +1,8 @@
-# Source: https://www.youtube.com/watch?v=7-cpaJyS-PM, deploying pygame using pygbag
+
 import os
 import sys
 import webbrowser
+import asyncio
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -223,26 +224,24 @@ def main_menu():
 
         pygame.display.update()
 
-        running = True
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    running = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if play_button_rect.collidepoint(event.pos):
-                        options_menu()  # Show options menu after starting the game
-                    elif quit_button_rect.collidepoint(event.pos):
-                        pygame.quit()
-                        running = False
-                    elif footer_rect.collidepoint(event.pos):
-                        webbrowser.open(GITHUB_URL)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if play_button_rect.collidepoint(event.pos):
+                    options_menu()  # Show options menu after starting the game
+                elif quit_button_rect.collidepoint(event.pos):
+                    pygame.quit()
+                    return
+                elif footer_rect.collidepoint(event.pos):
+                    webbrowser.open(GITHUB_URL)
 
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
-                        running = False
+                        sys.exit()
 
 def options_menu():
     options = [
@@ -417,7 +416,6 @@ def main(selected_mode):
 
         pygame.display.update()
 
-
-
 if __name__ == "__main__":
     main_menu()
+
